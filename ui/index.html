@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Browser DevTools</title>
+  <link rel="stylesheet" href="https://registry.construct.computer/sdk/construct.css">
+  <script src="https://registry.construct.computer/sdk/construct.js"></script>
+  <style>
+    :root { color-scheme: dark; }
+    body { margin: 0; font-family: var(--c-font, system-ui, sans-serif); background: var(--c-bg, #0a0a12); color: var(--c-text, #e4e4ed); }
+    .wrap { padding: 18px; display: grid; gap: 14px; }
+    .panel { background: var(--c-surface, rgba(255,255,255,.04)); border: 1px solid var(--c-border, rgba(255,255,255,.08)); border-radius: 14px; padding: 14px; }
+    .grid { display: grid; grid-template-columns: 1fr 160px 130px; gap: 10px; }
+    label { display: grid; gap: 6px; color: var(--c-text-secondary, rgba(228,228,237,.75)); font-size: 12px; }
+    input, textarea, select { width: 100%; box-sizing: border-box; border: 1px solid var(--c-border, rgba(255,255,255,.1)); background: rgba(255,255,255,.06); color: inherit; border-radius: 10px; padding: 10px; font: inherit; }
+    textarea { min-height: 170px; font-family: var(--c-font-mono, ui-monospace, monospace); resize: vertical; }
+    .actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
+    button { cursor: pointer; }
+    pre { white-space: pre-wrap; overflow: auto; max-height: 320px; margin: 0; font-family: var(--c-font-mono, ui-monospace, monospace); font-size: 12px; }
+    img { max-width: 100%; border-radius: 10px; border: 1px solid var(--c-border, rgba(255,255,255,.08)); margin-top: 12px; }
+    .muted { color: var(--c-text-muted, rgba(228,228,237,.55)); font-size: 12px; }
+    .row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <section class="panel">
+      <div class="row">
+        <h1 style="margin:0;font-size:18px">Browser DevTools</h1>
+        <span class="badge badge-accent">remote browser</span>
+      </div>
+      <p class="muted">Navigate pages, take screenshots, and run console JavaScript through Browserless.</p>
+      <div class="grid">
+        <label>URL
+          <input id="url" value="https://example.com" placeholder="https://example.com">
+        </label>
+        <label>Viewport width
+          <input id="width" type="number" value="1440">
+        </label>
+        <label>Height
+          <input id="height" type="number" value="900">
+        </label>
+      </div>
+    </section>
+
+    <section class="panel">
+      <label>JavaScript
+        <textarea id="code" spellcheck="false">document.title</textarea>
+      </label>
+      <div class="actions">
+        <button class="btn" id="snapshot">Snapshot</button>
+        <button class="btn" id="screenshot">Screenshot</button>
+        <button class="btn" id="console">Run console JS</button>
+        <button class="btn-secondary" id="clear">Clear</button>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2 style="font-size:14px;margin-top:0">Output</h2>
+      <pre id="output">Ready.</pre>
+      <div id="images"></div>
+    </section>
+  </div>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+
+    function args() {
+      return {
+        url: $('url').value.trim(),
+        viewport_width: Number($('width').value || 1440),
+        viewport_height: Number($('height').value || 900)
+      };
+    }
+
+    function showResult(result) {
+      $('images').innerHTML = '';
+      if (!result || !result.content) {
+        $('output').textContent = String(result ?? 'No result');
+        return;
+      }
+      const texts = [];
+      for (const item of result.content) {
+        if (item.type === 'text') texts.push(item.text);
+        if (item.type === 'image') {
+          const img = document.createElement('img');
+          img.src = `data:${item.mimeType || 'image/png'};base64,${item.data}`;
+          $('images').appendChild(img);
+        }
+      }
+      $('output').textContent = texts.join('\n\n') || JSON.stringify(result, null, 2);
+    }
+
+    async function callTool(name, payload) {
+      $('output').textContent = `Running ${name}...`;
+      $('images').innerHTML = '';
+      try {
+        const result = await construct.tools.call(name, payload);
+        showResult(result);
+      } catch (err) {
+        $('output').textContent = err && err.message ? err.message : String(err);
+      }
+    }
+
+    construct.ready(() => {
+      construct.ui.setTitle('Browser DevTools');
+      $('snapshot').onclick = () => callTool('snapshot_page', { ...args(), javascript: $('code').value, max_chars: 8000 });
+      $('screenshot').onclick = () => callTool('take_screenshot', { ...args(), javascript: $('code').value, full_page: false });
+      $('console').onclick = () => callTool('run_console_javascript', { ...args(), code: $('code').value, include_screenshot: true });
+      $('clear').onclick = () => { $('output').textContent = 'Ready.'; $('images').innerHTML = ''; };
+    });
+  </script>
+</body>
+</html>
