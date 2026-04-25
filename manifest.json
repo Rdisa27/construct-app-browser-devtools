@@ -1,0 +1,69 @@
+{
+  "$schema": "https://registry.construct.computer/schemas/manifest.json",
+  "name": "Browser DevTools",
+  "description": "Remote browser tools for navigation, screenshots, console JavaScript, and Puppeteer automation.",
+  "author": {
+    "name": "Ramiro Gonsalez",
+    "url": "https://github.com/Rdisa27"
+  },
+  "owners": ["Rdisa27"],
+  "icon": "ui/icon.svg",
+  "categories": ["developer-tools"],
+  "tags": ["browser", "devtools", "screenshots", "javascript", "puppeteer", "automation"],
+  "ui": {
+    "entry": "ui/index.html",
+    "width": 980,
+    "height": 760
+  },
+  "auth": {
+    "schemes": [
+      {
+        "type": "api_key",
+        "label": "Browserless API token",
+        "instructions": "Create a Browserless API token at browserless.io. The app calls the Browserless /function endpoint to run Puppeteer in a managed browser.",
+        "fields": [
+          {
+            "name": "browserless_token",
+            "displayName": "Browserless API Token",
+            "type": "password",
+            "required": true,
+            "placeholder": "bless_... or your Browserless token"
+          },
+          {
+            "name": "browserless_base_url",
+            "displayName": "Browserless Base URL",
+            "type": "text",
+            "required": false,
+            "placeholder": "https://production-sfo.browserless.io"
+          }
+        ]
+      }
+    ]
+  },
+  "permissions": {
+    "network": [
+      "production-sfo.browserless.io",
+      "production-lon.browserless.io",
+      "production-ams.browserless.io"
+    ],
+    "storage": "64KB"
+  },
+  "tools": [
+    {
+      "name": "snapshot_page",
+      "description": "Navigate to a page and return title, status, visible text, headings, links, console output, page errors, and failed requests."
+    },
+    {
+      "name": "take_screenshot",
+      "description": "Navigate to a page and return a PNG screenshot of the viewport, full page, or CSS selector."
+    },
+    {
+      "name": "run_console_javascript",
+      "description": "Navigate to a page and execute JavaScript as if pasted into DevTools Console."
+    },
+    {
+      "name": "automate_browser",
+      "description": "Run a trusted Puppeteer script for multi-step browsing, clicking, extraction, and debugging."
+    }
+  ]
+}
